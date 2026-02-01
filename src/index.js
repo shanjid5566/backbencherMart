@@ -4,6 +4,8 @@ import app from "./app.js"; // express app (ESM import)
 import { connectDB } from "./config/db.js"; // named export for DB connect
 import { productRouter } from "./routes/v1/productRoute.js";
 import { authRouter } from "./routes/v1/authRoute.js";
+import { faqRouter } from "./routes/v1/faqRoute.js";
+import cartRoute from './routes/v1/cartRoute.js';
 
 const PORT = process.env.PORT ?? 4000; // port config with fallback
 
@@ -28,3 +30,5 @@ app.get('/api/health', (req, res) => {
 
 app.use("/", authRouter);
 app.use("/", productRouter); // use product routes
+app.use("/", faqRouter); // use FAQ routes
+app.use('/', cartRoute); // use cart routes
