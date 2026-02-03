@@ -1,4 +1,5 @@
 import product from "../models/product.js";
+import Order from "../models/order.js";
 
 export const fetchProducts = async ({
   page,
@@ -125,4 +126,41 @@ export const deleteProduct = async ({ productId } = {}) => {
     throw err;
   }
   return removed;
+};
+
+export const getTopSellingProducts = async (limit = 10) => {
+  try {
+    const n = Math.max(1, Math.min(100, Number(limit || 10)));
+    const pipeline = [
+      { $unwind: "$items" },
+      {
+        $group: {
+          _id: "$items.product",
+          totalQuantity: { $sum: "$items.quantity" },
+          totalRevenue: { $sum: { $multiply: ["$items.quantity", "$items.price"] } },
+        },
+      },
+      { $sort: { totalQuantity: -1 } },
+      { $limit: n },
+      {
+        $lookup: {
+          from: "products",
+          localField: "_id",
+          foreignField: "_id",
+          as: "product",
+        },
+      },
+      { $unwind: "$product" },
+      { $project: { product: 1, totalQuantity: 1, totalRevenue: 1 } },
+    ];
+
+    const rows = await Order.aggregate(pipeline).exec();
+    return rows.map((r) => ({
+      product: r.product,
+      totalQuantity: r.totalQuantity,
+      totalRevenue: r.totalRevenue,
+    }));
+  } catch (err) {
+    throw new Error("Error fetching top selling products: " + err.message);
+  }
 };

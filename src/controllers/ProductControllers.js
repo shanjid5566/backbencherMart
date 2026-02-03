@@ -1,4 +1,4 @@
-import { fetchProducts, createProduct, updateProduct, updateProductStock, deleteProduct } from "../services/productService.js";
+import { fetchProducts, createProduct, updateProduct, updateProductStock, deleteProduct, getTopSellingProducts } from "../services/productService.js";
 import cloudinary from "../config/cloudinary.js";
 
 const uploadToCloudinary = (buffer, filename) =>
@@ -147,6 +147,18 @@ export const deleteProductHandler = async (req, res) => {
   } catch (error) {
     const status = error.status || 500;
     console.error("deleteProduct error:", error.message);
+    return res.status(status).json({ message: error.message });
+  }
+};
+
+export const getTopSelling = async (req, res) => {
+  try {
+    const limit = Number(req.query.limit ?? 10);
+    const items = await getTopSellingProducts(limit);
+    return res.status(200).json({ items });
+  } catch (error) {
+    console.error("getTopSelling error:", error);
+    const status = error.status || 500;
     return res.status(status).json({ message: error.message });
   }
 };
