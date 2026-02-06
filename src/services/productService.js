@@ -164,3 +164,27 @@ export const getTopSellingProducts = async (limit = 10) => {
     throw new Error("Error fetching top selling products: " + err.message);
   }
 };
+
+export const getProductById = async ({ productId, fields = null } = {}) => {
+  if (!productId) {
+    const err = new Error("productId required");
+    err.status = 400;
+    throw err;
+  }
+
+  const selectFields =
+    fields && typeof fields === "string"
+      ? fields.split(",").map((f) => f.trim()).join(" ")
+      : fields;
+
+  const query = product.findById(productId);
+  if (selectFields) query.select(selectFields);
+
+  const found = await query.lean().exec();
+  if (!found) {
+    const err = new Error("Product not found");
+    err.status = 404;
+    throw err;
+  }
+  return found;
+};

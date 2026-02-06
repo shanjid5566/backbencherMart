@@ -1,4 +1,4 @@
-import { fetchProducts, createProduct, updateProduct, updateProductStock, deleteProduct, getTopSellingProducts } from "../services/productService.js";
+import { fetchProducts, createProduct, updateProduct, updateProductStock, deleteProduct, getTopSellingProducts, getProductById } from "../services/productService.js";
 import cloudinary from "../config/cloudinary.js";
 
 const uploadToCloudinary = (buffer, filename) =>
@@ -159,6 +159,19 @@ export const getTopSelling = async (req, res) => {
   } catch (error) {
     console.error("getTopSelling error:", error);
     const status = error.status || 500;
+    return res.status(status).json({ message: error.message });
+  }
+};
+
+export const getProductHandler = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const { fields } = req.query;
+    const prod = await getProductById({ productId, fields });
+    return res.status(200).json({ product: prod });
+  } catch (error) {
+    const status = error.status || 500;
+    console.error("getProduct error:", error.message || error);
     return res.status(status).json({ message: error.message });
   }
 };

@@ -1,5 +1,5 @@
 import express from "express";
-import { getProducts, createProductHandler, updateProductHandler, updateProductStockHandler, deleteProductHandler, getTopSelling } from "../../controllers/ProductControllers.js";
+import { getProducts, createProductHandler, updateProductHandler, updateProductStockHandler, deleteProductHandler, getTopSelling, getProductHandler } from "../../controllers/ProductControllers.js";
 import { getReviews, postReview, patchReview, deleteReview } from "../../controllers/ReviewControllers.js";
 import { verifyToken } from "../../middleware/authMiddleware.js";
 import multer from "multer";
@@ -23,6 +23,9 @@ const router = express.Router();
 router.get("/api/products", getProducts);
 // Top-selling products
 router.get("/api/products/top", getTopSelling);
+
+// Get single product by id
+router.get("/api/products/:productId", getProductHandler);
 
 // Reviews for a product
 router.get("/api/products/:productId/reviews", getReviews);
