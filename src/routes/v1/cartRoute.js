@@ -15,7 +15,8 @@ router.get('/api/cart', optionalAuth, CartController.getCart);
 // POST add item to cart
 router.post(
   '/api/cart/items',
-  optionalAuth,
+  // add-to-cart now requires authenticated user
+  authMiddleware.verifyToken,
   body('productId').isMongoId().withMessage('productId is required'),
   body('quantity')
     .optional()
@@ -52,6 +53,9 @@ router.post(
   body('payment').optional().isObject(),
   CartController.checkout
 );
+
+// POST merge (compatibility) - requires auth but sessionId not required in auth-only flow
+router.post('/api/cart/merge', authMiddleware.verifyToken, CartController.mergeCart);
 
 const cartRoute = router;
 export default cartRoute;

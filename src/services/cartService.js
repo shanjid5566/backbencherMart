@@ -3,46 +3,24 @@ import Cart from '../models/cart.js';
 import Product from '../models/product.js';
 import Order from '../models/order.js';
 
-const GUEST_TTL_DAYS = 30;
+// Create or return a cart for an authenticated user
+export async function createOrGetCart({ userId }) {
+  if (!userId) throw new Error('Authentication required');
 
-// Create or return a cart based on userId or sessionId
-export async function createOrGetCart({ userId, sessionId }) {
-  if (userId) {
-    let cart = await Cart.findOne({ user: userId });
-    if (!cart) {
-      cart = new Cart({ user: userId });
-      cart.setGuestTTL(null);
-      await cart.save();
-    }
-    return cart;
+  let cart = await Cart.findOne({ user: userId });
+  if (!cart) {
+    cart = new Cart({ user: userId });
+    // ensure no guest TTL on authenticated carts
+    if (typeof cart.setGuestTTL === 'function') cart.setGuestTTL(null);
+    await cart.save();
   }
-
-  if (sessionId) {
-    let cart = await Cart.findOne({ sessionId });
-    if (!cart) {
-      cart = new Cart({ sessionId });
-      cart.setGuestTTL(GUEST_TTL_DAYS);
-      await cart.save();
-    }
-    return cart;
-  }
-
-  const newSessionId = new mongoose.Types.ObjectId().toString();
-  const cart = new Cart({ sessionId: newSessionId });
-  cart.setGuestTTL(GUEST_TTL_DAYS);
-  await cart.save();
   return cart;
 }
 
 // Add item to cart (matched by product + selectedOptions)
-export async function addItem({
-  userId,
-  sessionId,
-  productId,
-  quantity = 1,
-  selectedOptions = {},
-}) {
-  const cart = await createOrGetCart({ userId, sessionId });
+export async function addItem({ userId, productId, quantity = 1, selectedOptions = {} }) {
+  if (!userId) throw new Error('Authentication required');
+  const cart = await createOrGetCart({ userId });
   const product = await Product.findById(productId).lean();
   if (!product) throw new Error('Product not found');
 
@@ -66,14 +44,14 @@ export async function addItem({
     });
   }
 
-  cart.setGuestTTL(GUEST_TTL_DAYS);
   await cart.save();
   return cart;
 }
 
 // Update quantity of a cart item
-export async function updateItemQty({ userId, sessionId, itemId, quantity }) {
-  const cart = await createOrGetCart({ userId, sessionId });
+export async function updateItemQty({ userId, itemId, quantity }) {
+  if (!userId) throw new Error('Authentication required');
+  const cart = await createOrGetCart({ userId });
   const item = cart.items.id(itemId);
   if (!item) throw new Error('Item not found');
 
@@ -83,83 +61,35 @@ export async function updateItemQty({ userId, sessionId, itemId, quantity }) {
     item.quantity = quantity;
   }
 
-  cart.setGuestTTL(GUEST_TTL_DAYS);
   await cart.save();
   return cart;
 }
 
 // Remove item from cart
-export async function removeItem({ userId, sessionId, itemId }) {
-  const cart = await createOrGetCart({ userId, sessionId });
+export async function removeItem({ userId, itemId }) {
+  if (!userId) throw new Error('Authentication required');
+  const cart = await createOrGetCart({ userId });
   cart.items.id(itemId)?.remove();
-  cart.setGuestTTL(GUEST_TTL_DAYS);
   await cart.save();
   return cart;
 }
 
 // Clear all cart items
-export async function clearCart({ userId, sessionId }) {
-  const cart = await createOrGetCart({ userId, sessionId });
+export async function clearCart({ userId }) {
+  if (!userId) throw new Error('Authentication required');
+  const cart = await createOrGetCart({ userId });
   cart.items = [];
-  cart.setGuestTTL(null);
+  if (typeof cart.setGuestTTL === 'function') cart.setGuestTTL(null);
   await cart.save();
   return cart;
 }
 
 // Merge guest cart into authenticated user's cart
-export async function mergeGuestCart({ userId, sessionId }) {
-  if (!userId || !sessionId) {
-    return createOrGetCart({ userId, sessionId });
-  }
-
-  const guestCart = await Cart.findOne({ sessionId });
-  if (!guestCart) {
-    return createOrGetCart({ userId, sessionId });
-  }
-
-  const session = await mongoose.startSession();
-  try {
-    let resultCart;
-
-    await session.withTransaction(async () => {
-      let userCart = await Cart.findOne({ user: userId }).session(session);
-      if (!userCart) {
-        userCart = new Cart({ user: userId, items: [] });
-      }
-
-      for (const gIt of guestCart.items) {
-        const match = userCart.items.find(
-          uIt =>
-            uIt.product.toString() === gIt.product.toString() &&
-            JSON.stringify(uIt.selectedOptions || {}) ===
-              JSON.stringify(gIt.selectedOptions || {})
-        );
-
-        if (match) {
-          match.quantity += gIt.quantity;
-        } else {
-          userCart.items.push({
-            product: gIt.product,
-            quantity: gIt.quantity,
-            price: gIt.price,
-            title: gIt.title,
-            thumbnail: gIt.thumbnail,
-            selectedOptions: gIt.selectedOptions,
-          });
-        }
-      }
-
-      userCart.setGuestTTL(null);
-      await userCart.save({ session });
-      await Cart.deleteOne({ _id: guestCart._id }).session(session);
-
-      resultCart = userCart;
-    });
-
-    return resultCart;
-  } finally {
-    session.endSession();
-  }
+export async function mergeGuestCart({ userId /*, sessionId */ }) {
+  // Guest/session-based carts are no longer used in the auth-only flow.
+  // Keep this helper to return the user's cart for compatibility.
+  if (!userId) throw new Error('Authentication required');
+  return createOrGetCart({ userId });
 }
 
 // Checkout process with stock and price revalidation
