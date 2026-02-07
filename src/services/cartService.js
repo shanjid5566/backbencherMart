@@ -164,13 +164,18 @@ export async function mergeGuestCart({ userId, sessionId }) {
 
 // Checkout process with stock and price revalidation
 export async function checkout({ userId, sessionId, paymentData = {}, metadata = {} }) {
+  // Require authenticated user for checkout — guests can add to cart but must log in to place order
+  if (!userId) {
+    throw new Error('Authentication required for checkout');
+  }
+
   const session = await mongoose.startSession();
 
   try {
     let result;
 
     await session.withTransaction(async () => {
-      const cartQuery = userId ? { user: userId } : { sessionId };
+      const cartQuery = { user: userId };
       const cart = await Cart.findOne(cartQuery)
         .session(session)
         .populate('items.product');
