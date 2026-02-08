@@ -2,12 +2,24 @@ import Stripe from 'stripe';
 import Order from '../models/order.js';
 import Product from '../models/product.js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+// Initialize Stripe with API key validation
+if (!process.env.STRIPE_SECRET_KEY) {
+  console.error('⚠️ STRIPE_SECRET_KEY is not configured. Payment features will not work.');
+  console.error('Please add STRIPE_SECRET_KEY to your environment variables.');
+}
+
+const stripe = process.env.STRIPE_SECRET_KEY 
+  ? new Stripe(process.env.STRIPE_SECRET_KEY)
+  : null;
 
 /**
  * Create Stripe checkout session with order
  */
 export async function createCheckoutSession({ userId, cart, metadata = {} }) {
+  if (!stripe) {
+    throw new Error('Stripe is not configured. Please add STRIPE_SECRET_KEY to environment variables.');
+  }
+  
   try {
     // Validate cart items and prepare line items
     const lineItems = [];
@@ -101,6 +113,10 @@ export async function createCheckoutSession({ userId, cart, metadata = {} }) {
  * Verify payment session and get order status
  */
 export async function verifySession({ sessionId, userId }) {
+  if (!stripe) {
+    throw new Error('Stripe is not configured. Please add STRIPE_SECRET_KEY to environment variables.');
+  }
+  
   try {
     const session = await stripe.checkout.sessions.retrieve(sessionId);
 
@@ -237,6 +253,10 @@ export async function handleRefund({ charge }) {
  * Create refund for an order
  */
 export async function createRefund({ orderId, userId, amount = null }) {
+  if (!stripe) {
+    throw new Error('Stripe is not configured. Please add STRIPE_SECRET_KEY to environment variables.');
+  }
+  
   try {
     const order = await Order.findById(orderId).populate('items.product');
 
