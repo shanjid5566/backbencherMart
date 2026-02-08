@@ -56,7 +56,7 @@ export async function updateItemQty({ userId, itemId, quantity }) {
   if (!item) throw new Error('Item not found');
 
   if (quantity <= 0) {
-    item.remove();
+    cart.items.pull(itemId);
   } else {
     item.quantity = quantity;
   }
@@ -69,7 +69,10 @@ export async function updateItemQty({ userId, itemId, quantity }) {
 export async function removeItem({ userId, itemId }) {
   if (!userId) throw new Error('Authentication required');
   const cart = await createOrGetCart({ userId });
-  cart.items.id(itemId)?.remove();
+  
+  // Use pull() to remove item by _id
+  cart.items.pull(itemId);
+  
   await cart.save();
   return cart;
 }
