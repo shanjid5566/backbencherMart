@@ -1,6 +1,6 @@
 import Stripe from "stripe";
 import mongoose from "mongoose";
-import paymentService from "../src/services/paymentService.js";
+import * as paymentService from "../src/services/paymentService.js";
 
 export const config = {
   api: {
