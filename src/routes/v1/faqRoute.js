@@ -4,17 +4,16 @@ import { createFAQController, deleteFaqHandler, getFAQsByProductIdController, up
 
 const router = express.Router();
 
-// Route to get FAQs by product ID
-router.get("/api/faqs/:productId",getFAQsByProductIdController)
+// Public: list FAQs for a product
+router.get("/api/faqs/:productId", getFAQsByProductIdController);
 
-// Route to create a new FAQ entry, protected by token verification
+// Admin: create FAQ for a product
 router.post("/api/faqs/:productId", verifyToken, createFAQController);
 
-// update FAQ route can be added here similarly, protected by verifyToken middleware
+// Admin: update FAQ by id
+router.patch("/api/faqs/:faqId", verifyToken, updateFaqHandler);
 
-router.patch("/api/faqs", verifyToken, updateFaqHandler);
-
-// delete FAQ route can be added here similarly, protected by verifyToken middleware
-router.delete("/api/faqs", verifyToken, deleteFaqHandler);
+// Admin: delete FAQ by id
+router.delete("/api/faqs/:faqId", verifyToken, deleteFaqHandler);
 
 export const faqRouter = router;

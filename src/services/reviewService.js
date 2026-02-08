@@ -13,7 +13,7 @@ export const fetchReviews = async ({ productId, page, limit } = {}) => {
     const l = Math.max(1, Math.min(1000, Number(limit ?? 10)));
     const skip = (p - 1) * l;
 
-    const [items, totalItems] = await Promise.all([
+    const [items, totalItems, productStats] = await Promise.all([
       Review.find({ productId })
         .sort({ createdAt: -1 })
         .skip(skip)
@@ -21,6 +21,7 @@ export const fetchReviews = async ({ productId, page, limit } = {}) => {
         .lean()
         .exec(),
       Review.countDocuments({ productId }).exec(),
+      Product.findById(productId).select("averageRatings totalReviews").lean().exec(),
     ]);
 
     return {
@@ -32,11 +33,26 @@ export const fetchReviews = async ({ productId, page, limit } = {}) => {
         totalPages: Math.ceil(totalItems / l),
         totalItems,
       },
+      summary: {
+        totalReviews: productStats?.totalReviews ?? totalItems,
+        averageRatings: productStats?.averageRatings ?? 0,
+      },
     };
   }
 
-  const items = await Review.find({ productId }).sort({ createdAt: -1 }).lean().exec();
-  return { paginated: false, items };
+  const [items, productStats] = await Promise.all([
+    Review.find({ productId }).sort({ createdAt: -1 }).lean().exec(),
+    Product.findById(productId).select("averageRatings totalReviews").lean().exec(),
+  ]);
+
+  return {
+    paginated: false,
+    items,
+    summary: {
+      totalReviews: productStats?.totalReviews ?? items.length,
+      averageRatings: productStats?.averageRatings ?? 0,
+    },
+  };
 };
 
 export const createReview = async ({ productId, userEmail, userName, rating, comment } = {}) => {

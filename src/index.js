@@ -8,6 +8,7 @@ import { faqRouter } from "./routes/v1/faqRoute.js";
 import cartRoute from './routes/v1/cartRoute.js';
 import { paymentRouter } from './routes/v1/paymentRoute.js';
 import { userRouter } from './routes/v1/userRoute.js';
+import { adminRouter } from './routes/v1/adminRoute.js';
 
 const PORT = process.env.PORT ?? 4000; // port config with fallback
 
@@ -36,6 +37,7 @@ app.use("/", faqRouter); // use FAQ routes
 app.use('/', cartRoute); // use cart routes
 app.use('/', paymentRouter); // use payment routes
 app.use('/', userRouter); // use user routes
+app.use('/', adminRouter); // use admin routes
 
 // Global error handler - must be after all routes
 app.use((err, req, res, next) => {

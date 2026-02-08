@@ -35,6 +35,9 @@ export const getFAQsByProductIdController = async (req, res) => {
 
 export const createFAQController = async (req, res) => {
   try {
+    if (!req.user || req.user.role !== "admin") {
+      return res.status(403).json({ message: "Forbidden: admin only" });
+    }
     const { productId } = req.params;
     const { question, answer } = req.body;
     const newFAQ = await createFAQ(question, answer, productId);
@@ -53,7 +56,7 @@ export const updateFaqHandler = async (req, res) => {
     if (!req.user || req.user.role !== "admin") {
       return res.status(403).json({ message: "Forbidden: admin only" });
     }
-    const { faqId } = req.body;
+    const { faqId } = req.params;
     const data = req.body;
     const updated = await updateFAQ({ faqId, data });
     return res.status(200).json({ message: "FAQ updated", faq: updated });
@@ -70,7 +73,7 @@ export const deleteFaqHandler = async (req, res) => {
     if (!req.user || req.user.role !== "admin") {
       return res.status(403).json({ message: "Forbidden: admin only" });
     }
-    const { faqId } = req.body;
+    const { faqId } = req.params;
     const removed = await deleteFAQ({ faqId });
     return res.status(200).json({ message: "FAQ deleted", faq: removed });
   } catch (error) {
