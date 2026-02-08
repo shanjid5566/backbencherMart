@@ -20,15 +20,21 @@ export async function createCheckoutSession({ userId, cart, metadata = {} }) {
     throw new Error('Stripe is not configured. Please add STRIPE_SECRET_KEY to environment variables.');
   }
   
+  if (!cart || !cart.items || cart.items.length === 0) {
+    throw new Error('Cart is empty');
+  }
+  
   try {
     // Validate cart items and prepare line items
     const lineItems = [];
     
     for (const item of cart.items) {
-      const product = await Product.findById(item.product);
+      // Get product ID (handle both populated and non-populated)
+      const productId = item.product?._id || item.product;
+      const product = await Product.findById(productId);
       
       if (!product) {
-        throw new Error(`Product not found: ${item.product}`);
+        throw new Error(`Product not found: ${productId}`);
       }
 
       // Check stock availability
@@ -80,12 +86,13 @@ export async function createCheckoutSession({ userId, cart, metadata = {} }) {
     });
 
     // Create Stripe checkout session
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
-      success_url: `${process.env.FRONTEND_URL}/order/success?session_id={CHECKOUT_SESSION_ID}&order_id=${order._id}`,
-      cancel_url: `${process.env.FRONTEND_URL}/cart`,
+      success_url: `${frontendUrl}/order/success?session_id={CHECKOUT_SESSION_ID}&order_id=${order._id}`,
+      cancel_url: `${frontendUrl}/cart`,
       metadata: {
         orderId: order._id.toString(),
         userId: userId.toString(),
@@ -105,7 +112,10 @@ export async function createCheckoutSession({ userId, cart, metadata = {} }) {
       orderId: order._id,
     };
   } catch (error) {
-    throw new Error(`Checkout session creation failed: ${error.message}`);
+    console.error('Checkout session creation error:', error);
+    // Re-throw with more context
+    const errorMessage = error.message || 'Unknown error';
+    throw new Error(`Checkout session creation failed: ${errorMessage}`);
   }
 }
 

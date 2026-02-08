@@ -13,8 +13,8 @@ export async function createCheckoutSession(req, res, next) {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    // Get cart
-    const cart = await Cart.findOne({ user: userId }).populate('items.product');
+    // Get cart (don't populate - we have denormalized data)
+    const cart = await Cart.findOne({ user: userId });
     
     if (!cart || cart.items.length === 0) {
       return res.status(400).json({ error: 'Cart is empty' });
