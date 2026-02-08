@@ -1,0 +1,62 @@
+### Stripe Payment Integration - Test Requests
+### Use REST Client extension in VS Code to run these
+
+@baseUrl = http://localhost:4000
+@token = YOUR_JWT_TOKEN_HERE
+
+### 1. Get Stripe Config (Public - No Auth Required)
+GET {{baseUrl}}/api/v1/payment/config
+
+
+### 2. Create Checkout Session (Requires Auth)
+POST {{baseUrl}}/api/v1/payment/create-checkout-session
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "metadata": {
+    "email": "customer@example.com",
+    "shippingAddress": "123 Main Street, City, State 12345",
+    "notes": "Please deliver between 9am-5pm"
+  }
+}
+
+
+### 3. Verify Payment Status (Replace :sessionId with actual session ID)
+GET {{baseUrl}}/api/v1/payment/verify/cs_test_a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6
+Authorization: Bearer {{token}}
+
+
+### 4. Create Refund (Replace orderId with actual order ID)
+POST {{baseUrl}}/api/v1/payment/refund
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "orderId": "65f1234567890abcdef12345"
+}
+
+
+### 5. Create Partial Refund
+POST {{baseUrl}}/api/v1/payment/refund
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "orderId": "65f1234567890abcdef12345",
+  "amount": 25.50
+}
+
+
+### Test Flow:
+### 1. Login to get JWT token
+### 2. Add items to cart
+### 3. Create checkout session (get URL)
+### 4. Visit URL in browser and complete payment with test card
+### 5. Verify payment status
+
+### Stripe Test Cards:
+### Success: 4242 4242 4242 4242
+### Decline: 4000 0000 0000 0002
+### Requires Auth: 4000 0025 0000 3155
+### Use any future expiry, any CVC, any ZIP

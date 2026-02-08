@@ -6,6 +6,7 @@ import { productRouter } from "./routes/v1/productRoute.js";
 import { authRouter } from "./routes/v1/authRoute.js";
 import { faqRouter } from "./routes/v1/faqRoute.js";
 import cartRoute from './routes/v1/cartRoute.js';
+import { paymentRouter } from './routes/v1/paymentRoute.js';
 
 const PORT = process.env.PORT ?? 4000; // port config with fallback
 
@@ -32,3 +33,4 @@ app.use("/", authRouter);
 app.use("/", productRouter); // use product routes
 app.use("/", faqRouter); // use FAQ routes
 app.use('/', cartRoute); // use cart routes
+app.use('/', paymentRouter); // use payment routes
