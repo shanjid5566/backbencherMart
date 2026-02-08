@@ -25,12 +25,20 @@ export async function createCheckoutSession({ userId, cart, metadata = {} }) {
   }
   
   try {
+    console.log('Creating checkout session for user:', userId);
+    console.log('Cart items count:', cart.items.length);
+    
     // Validate cart items and prepare line items
     const lineItems = [];
     
     for (const item of cart.items) {
       // Get product ID (handle both populated and non-populated)
       const productId = item.product?._id || item.product;
+      
+      if (!productId) {
+        throw new Error(`Invalid product reference in cart item`);
+      }
+      
       const product = await Product.findById(productId);
       
       if (!product) {
@@ -65,9 +73,11 @@ export async function createCheckoutSession({ userId, cart, metadata = {} }) {
       (sum, item) => sum + item.price * item.quantity,
       0
     );
+    
+    console.log('Creating order with subTotal:', subTotal);
 
     // Create pending order
-    const order = await Order.create({
+    const orderData = {
       user: userId,
       items: cart.items.map(item => ({
         product: item.product._id || item.product,
@@ -83,10 +93,15 @@ export async function createCheckoutSession({ userId, cart, metadata = {} }) {
         gateway: 'stripe',
       },
       status: 'created',
-    });
+    };
+    
+    const order = await Order.create(orderData);
+    console.log('Order created:', order._id);
 
     // Create Stripe checkout session
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    console.log('Creating Stripe session with frontendUrl:', frontendUrl);
+    
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: lineItems,
@@ -100,6 +115,8 @@ export async function createCheckoutSession({ userId, cart, metadata = {} }) {
       customer_email: metadata.email || undefined,
       expires_at: Math.floor(Date.now() / 1000) + (30 * 60), // Expire in 30 minutes
     });
+    
+    console.log('Stripe session created:', session.id);
 
     // Update order with session ID
     await Order.findByIdAndUpdate(order._id, {

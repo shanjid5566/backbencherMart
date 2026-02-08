@@ -8,6 +8,9 @@ const router = express.Router();
 // Get Stripe config (public endpoint)
 router.get('/api/payment/config', PaymentController.getConfig);
 
+// Debug endpoint (public - but consider restricting in production)
+router.get('/api/v1/payment/debug', PaymentController.debugStatus);
+
 // Create Stripe checkout session
 router.post(
   '/api/v1/payment/create-checkout-session',

@@ -34,3 +34,13 @@ app.use("/", productRouter); // use product routes
 app.use("/", faqRouter); // use FAQ routes
 app.use('/', cartRoute); // use cart routes
 app.use('/', paymentRouter); // use payment routes
+
+// Global error handler - must be after all routes
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal Server Error',
+    details: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
+});

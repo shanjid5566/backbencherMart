@@ -42,7 +42,12 @@ export async function createCheckoutSession(req, res, next) {
 
   } catch (err) {
     console.error('Stripe checkout error:', err);
-    next(err);
+    
+    // Send detailed error response
+    res.status(500).json({
+      error: err.message || 'Failed to create checkout session',
+      details: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    });
   }
 }
 
@@ -111,9 +116,31 @@ export async function getConfig(req, res) {
   });
 }
 
+/**
+ * Debug endpoint - check payment system status
+ * GET /api/v1/payment/debug
+ */
+export async function debugStatus(req, res) {
+  res.json({
+    stripe: {
+      configured: !!process.env.STRIPE_SECRET_KEY,
+      publishableKey: process.env.STRIPE_PUBLISHABLE_KEY ? 'Set' : 'Missing',
+      webhookSecret: process.env.STRIPE_WEBHOOK_SECRET ? 'Set' : 'Missing',
+      currency: process.env.STRIPE_CURRENCY || 'usd',
+    },
+    frontend: {
+      url: process.env.FRONTEND_URL || 'Not set (using fallback)',
+    },
+    database: {
+      connected: true, // If we get here, DB is connected
+    }
+  });
+}
+
 export default {
   createCheckoutSession,
   verifyPayment,
   createRefund,
   getConfig,
+  debugStatus,
 };
