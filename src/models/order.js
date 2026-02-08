@@ -21,7 +21,8 @@ const OrderSchema = new mongoose.Schema({
     raw: { type: mongoose.Schema.Types.Mixed }, // রিসিভ করা রো/গেটওয়ে ডেটা
   },
   metadata: { type: mongoose.Schema.Types.Mixed }, // অতিরিক্ত মেটা (shipping, coupon ইত্যাদি)
-  status: { type: String, enum: ['created', 'processing', 'completed', 'cancelled', 'refunded'], default: 'created' }, // অর্ডারের লাইফসাইকেল স্টেট
+  status: { type: String, enum: ['created', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'], default: 'created' }, // অর্ডারের লাইফসাইকেল স্টেট
+  orderId: { type: String, unique: true }, // Custom order ID (e.g., ORD-001)
 }, { timestamps: true }); // createdAt, updatedAt
 
 export default mongoose.model('Order', OrderSchema); // Order মডেল এক্সপোর্ট
