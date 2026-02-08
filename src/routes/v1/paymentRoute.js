@@ -6,7 +6,7 @@ import authMiddleware from '../../middleware/authMiddleware.js';
 const router = express.Router();
 
 // Get Stripe config (public endpoint)
-router.get('/api/payment/config', PaymentController.getConfig);
+router.get('/api/v1/payment/config', PaymentController.getConfig);
 
 // Debug endpoint (public - but consider restricting in production)
 router.get('/api/v1/payment/debug', PaymentController.debugStatus);
@@ -21,14 +21,14 @@ router.post(
 
 // Verify payment status
 router.get(
-  '/api/payment/verify/:sessionId',
+  '/api/v1/payment/verify/:sessionId',
   authMiddleware.verifyToken,
   PaymentController.verifyPayment
 );
 
 // Create refund (admin/user endpoint)
 router.post(
-  '/api/payment/refund',
+  '/api/v1/payment/refund',
   authMiddleware.verifyToken,
   body('orderId').isMongoId().withMessage('Valid order ID required'),
   body('amount').optional().isNumeric().withMessage('Amount must be numeric'),
