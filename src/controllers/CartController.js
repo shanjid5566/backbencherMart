@@ -54,13 +54,18 @@ export async function updateItem(req, res, next) {
   }
 }
 
-// DELETE /api/v1/cart/items
+// DELETE /api/v1/cart/items/:itemId
 export async function removeItem(req, res, next) {
   try {
-    const { userId } = extractIdentifiers(req);
-    const { itemId: bodyItemId } = req.body;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
 
-    const cart = await cartService.removeItem({ userId, itemId: bodyItemId });
+    const { userId } = extractIdentifiers(req);
+    const { itemId } = req.params;
+
+    const cart = await cartService.removeItem({ userId, itemId });
 
     res.json(cart);
   } catch (err) {

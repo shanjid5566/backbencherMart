@@ -40,9 +40,9 @@ router.patch(
 
 // DELETE remove item from cart
 router.delete(
-  '/api/cart/items',
+  '/api/cart/items/:itemId',
   optionalAuth,
-  body('itemId').isMongoId().withMessage('Invalid itemId'),
+  param('itemId').isMongoId().withMessage('Invalid itemId'),
   CartController.removeItem
 );
 
