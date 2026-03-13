@@ -17,6 +17,9 @@ import {
   deleteUserController,
 } from "../../controllers/AdminController.js";
 import { verifyToken } from "../../middleware/authMiddleware.js";
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
 
 const router = express.Router();
 
